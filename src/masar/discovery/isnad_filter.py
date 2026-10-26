@@ -1,6 +1,60 @@
-"""Transmitter chain overlap and Common Link / authority anchoring."""
+"""Transmitter chain overlap, Common Link anchoring, and Homonym Disambiguation (FM-02)."""
 
 from typing import Optional
+
+
+def _resolve_sufyan(student: Optional[str], teacher: Optional[str]) -> tuple[str, Optional[str]]:
+    """Disambiguate 'sufyan' based on student or teacher edges."""
+    uyaynah_students = {"al_humaydi", "al_shafii", "ali_b_al_madini", "musaddad"}
+    thawri_students = {"waki", "yahya_al_qattan", "abd_al_rahman_b_mahdi", "abu_nuaym"}
+
+    if student in uyaynah_students:
+        return "sufyan_b_uyaynah", None
+    if student in thawri_students:
+        return "sufyan_al_thawri", None
+
+    warning = "Ambiguous transmitter 'sufyan': could be Sufyan al-Thawri or Sufyan b. Uyaynah"
+    return "sufyan", warning
+
+
+def _resolve_hammad(student: Optional[str], teacher: Optional[str]) -> tuple[str, Optional[str]]:
+    """Disambiguate 'hammad' based on student or teacher edges."""
+    salamah_teachers = {"thabit", "anas", "qatadah"}
+    zaid_teachers = {"amr_b_dinar", "ayyoub"}
+
+    if teacher in salamah_teachers:
+        return "hammad_b_salamah", None
+    if teacher in zaid_teachers:
+        return "hammad_b_zaid", None
+
+    warning = "Ambiguous transmitter 'hammad': could be Hammad b. Salamah or Hammad b. Zayd"
+    return "hammad", warning
+
+
+class HomonymDisambiguator:
+    """Disambiguates shared classical transmitter names via prosopographical graph edges."""
+
+    def disambiguate_chain(self, chain: list[str]) -> tuple[list[str], list[str]]:
+        """Resolve ambiguous names in isnad chain using adjacent student/teacher context."""
+        resolved: list[str] = []
+        warnings: list[str] = []
+
+        for i, narrator in enumerate(chain):
+            student = chain[i - 1] if i > 0 else None
+            teacher = chain[i + 1] if i + 1 < len(chain) else None
+
+            if narrator == "sufyan":
+                canon_id, warn = _resolve_sufyan(student, teacher)
+            elif narrator == "hammad":
+                canon_id, warn = _resolve_hammad(student, teacher)
+            else:
+                canon_id, warn = narrator, None
+
+            resolved.append(canon_id)
+            if warn:
+                warnings.append(warn)
+
+        return resolved, warnings
 
 
 class IsnadAnchorFilter:

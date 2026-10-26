@@ -182,3 +182,16 @@ def session_history(
     for e in events:
         status = "[UNDONE]" if e.is_undone else "[ACTIVE]"
         typer.echo(f"{e.timestamp} | {status} {e.action} -> {e.target_id}")
+
+
+@app.command("mcp")
+def run_mcp(
+    db: str = typer.Option("corpus.db", "--db", help="Path to hadiths SQLite database."),
+    curated_db: str = typer.Option("masar-curated.db", "--curated-db", help="Path to accretive store."),
+    session_db: str = typer.Option("masar_session.db", "--session-db", help="Path to session journal."),
+):
+    """Run native Model Context Protocol (MCP) JSON-RPC 2.0 stdio server."""
+    from masar.mcp_server import MasarMcpServer
+
+    server = MasarMcpServer(db_path=db, curated_db=curated_db, session_db=session_db)
+    server.run_stdio_server()

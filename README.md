@@ -2,7 +2,7 @@
 
 **High-Precision, Agent-Ergonomic Hadith Takhrīj & Variant Bundling Engine**
 
-Masar bridges unbundled hadith corpora (such as `riwayat-corpus` with ~925,000 records, custom JSON/CSV collections, and raw manuscript transcriptions) into verified, gate-checked `family_id` bundles. Built as the upstream feeder for [**Riwaq**](https://github.com/munir-abbasi/riwaq) (the Isnad-cum-Matn Analysis and stemma engine), Masar guarantees 100% schema compliance (`schema_version: 1`) and protects downstream ICMA analysis against boundary bleed, homonym traps, and topical false positives.
+Masar bridges unbundled hadith corpora (such as `riwayat-corpus` with ~925,000 records, custom JSON/CSV collections, and raw manuscript transcriptions) into verified, gate-checked `family_id` bundles. While Masar functions as a fully autonomous, standalone takhrīj workbench and variant discovery engine, it also serves as the native upstream feeder for [**Riwaq**](https://github.com/munir-abbasi/riwaq) (the Isnad-cum-Matn Analysis and stemma engine), guaranteeing 100% schema compliance (`schema_version: 1`) and protecting downstream ICMA analysis against boundary bleed, homonym traps, and topical false positives.
 
 ---
 
@@ -29,7 +29,7 @@ Masar bridges unbundled hadith corpora (such as `riwayat-corpus` with ~925,000 r
 - **Agent Protocol**: Model Context Protocol (MCP) JSON-RPC 2.0 stdio server
 - **REST Backend**: FastAPI & Uvicorn
 - **Verification Workbench**: React 18, TypeScript, Vite
-- **Downstream Target**: Riwaq `schema_version: 1` (`import-batch.json` & `hadith-record.json`)
+- **Downstream Target (Optional)**: Riwaq `schema_version: 1` (`import-batch.json` & `hadith-record.json`)
 
 ---
 
@@ -286,13 +286,16 @@ masar/
 
 ---
 
-## Downstream Ecosystem Integration: Riwaq
+## Downstream Ecosystem Integration: Riwaq (Optional)
 
-Masar is designed to operate seamlessly upstream from [**Riwaq**](https://github.com/munir-abbasi/riwaq) (Isnad-cum-Matn Analysis & Stemma Engine):
+> [!NOTE]
+> **Masar is fully autonomous and does not require Riwaq to function.** All multi-signal discovery, pericope alignment (*taqṭīʿ*), accretive boundary split editing, false positive quarantining, manual text ingestion, CLI operations, and the interactive verification workbench operate 100% locally and standalone. Riwaq is strictly an optional downstream consumer for researchers who wish to conduct automated Isnad-cum-Matn Analysis (ICMA) and stemma tree generation on verified bundles.
 
-1. **Discovery (Masar)**: Discovers, verifies, and bundles candidate variants across Sunni and Shīʿī collections into a unified family bundle.
-2. **Preflight Gating (Masar)**: Validates boundary hygiene, family consistency, and schema compliance.
-3. **ICMA Analysis (Riwaq)**: Ingests the exported `import-batch.json`, maps transmitter networks into a Directed Acyclic Graph (DAG), computes Common Links (CL) and Partial Common Links (PCL), and generates formal academic ICMA reports.
+When paired with [**Riwaq**](https://github.com/munir-abbasi/riwaq) (Isnad-cum-Matn Analysis & Stemma Engine), the workflow functions as follows:
+
+1. **Discovery & Verification (Masar — Standalone)**: Discovers, verifies, and bundles candidate variants across Sunni and Shīʿī collections into a unified family bundle.
+2. **Preflight Gating (Masar — Standalone)**: Validates boundary hygiene, family consistency, and schema compliance.
+3. **ICMA Analysis (Riwaq — Downstream Consumer)**: Ingests the exported `import-batch.json`, maps transmitter networks into a Directed Acyclic Graph (DAG), computes Common Links (CL) and Partial Common Links (PCL), and generates formal academic ICMA reports.
 
 ---
 

@@ -14,8 +14,8 @@ Current as of: 2026-10-26
 | **Agent CLI (`masar`)** | Operational | 🟢 Verified Phase 3 | `cli.py` | Search, Split, Add, Undo, MCP |
 | **Model Context Protocol (MCP)** | Operational | 🟢 Verified Phase 3 | `mcp_server.py` | JSON-RPC 2.0 Stdio, 5 Tools |
 | **Proposal Staging Buffer** | Operational | 🟢 Verified Phase 3 | `proposal_store.py` | Lifecycle, Drift Guard, SHA-256 |
-| **Riwaq Preflight Gates**| In-Design / Planned | 🟡 Pending Phase 4 | `preflight_gates.py` | - |
-| **Workbench Web UI** | In-Design / Planned | 🟡 Pending Phase 5 | `src/web/` | - |
+| **Riwaq Preflight Gates**| Operational | 🟢 Verified Phase 4 | `preflight_gates.py` | Schema, Family, Bleed, Isnad |
+| **Workbench Web UI** | Operational | 🟢 Verified Phase 5 | `src/web/` | Vite + React + API Client |
 
 ---
 
@@ -27,8 +27,8 @@ Current as of: 2026-10-26
 | **FM-02** | Homonym Disambiguation | `tests/e2e/test_e2e_homonym_disambig.py` | 🟢 Passed | `test-artifacts/homonym_audit_log.json` |
 | **FM-03** | Topical False Positive Quarantine | `tests/e2e/test_e2e_topic_trap.py` | 🟢 Passed | `test-artifacts/topical_quarantine_report.json` |
 | **FM-04** | Taqṭīʿ Fragment Alignment | `tests/e2e/test_e2e_taqtic.py` | 🟢 Passed | `test-artifacts/taqtic_alignment_dump.json` |
-| **FM-05** | Cross-Sectarian Takhrīj Parity | `tests/e2e/test_e2e_cross_sect.py` | ⏳ Pending Phase 4 | `test-artifacts/cross_sectarian_family.json` |
-| **FM-06** | Riwaq Schema Preflight Gate | `tests/e2e/test_e2e_riwaq_gate.py` | ⏳ Pending Phase 4 | `test-artifacts/riwaq_preflight_pass.json` |
+| **FM-05** | Cross-Sectarian Takhrīj Parity | `tests/e2e/test_e2e_cross_sect.py` | 🟢 Passed | `test-artifacts/cross_sectarian_family.json` |
+| **FM-06** | Riwaq Schema Preflight Gate | `tests/e2e/test_e2e_riwaq_gate.py` | 🟢 Passed | `test-artifacts/riwaq_preflight_pass.json` |
 | **FM-07** | Manual Entry & Custom Ingestion | `tests/e2e/test_e2e_manual_entry.py` | 🟢 Passed | `test-artifacts/manual_entry_verified.json` |
 | **FM-08** | AI Proposal Staging & Drift Guard | `tests/e2e/test_e2e_ai_staging.py` | 🟢 Passed | `test-artifacts/ai_proposal_staged.json` |
 

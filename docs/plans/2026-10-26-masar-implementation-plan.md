@@ -102,7 +102,9 @@ masar/
 │   │   │   ├── __init__.py
 │   │   │   ├── normalizer.py          # Arabic text & diacritic normalization (pure logic)
 │   │   │   ├── models.py              # Pydantic V2 models (Internal, Receipts, Riwaq)
-│   │   │   └── corpus_db.py           # SQLite adapter for riwayat-corpus
+│   │   │   ├── corpus_adapter.py      # Generic CorpusAdapter interface (Agnostic storage)
+│   │   │   ├── corpus_db.py           # SQLite adapter for riwayat-corpus
+│   │   │   └── manual_entry.py        # Manual record ingestion & heuristic boundary proposal
 │   │   ├── discovery/
 │   │   │   ├── __init__.py
 │   │   │   ├── fts_search.py          # BM25 search via SQLite FTS5
@@ -142,7 +144,9 @@ masar/
     │   ├── test_e2e_taqtic.py         # FM-04: Taqṭīʿ alignment E2E
     │   ├── test_e2e_cross_sect.py     # FM-05: Cross-sectarian takhrij E2E
     │   ├── test_e2e_topic_trap.py     # FM-03: Topical false positive rejection E2E
-    │   └── test_e2e_riwaq_gate.py     # FM-06: Riwaq preflight gate validation E2E
+    │   ├── test_e2e_riwaq_gate.py     # FM-06: Riwaq preflight gate validation E2E
+    │   ├── test_e2e_manual_entry.py   # FM-07: Manual text entry & heuristic split E2E
+    │   └── test_e2e_custom_corpus.py  # FM-07: Custom JSON/CSV corpus ingestion E2E
     └── unit/
         ├── test_normalizer.py         # Pure logic: Arabic diacritics & ligatures
         ├── test_models.py             # Schema serialization & receipt integrity
@@ -185,13 +189,29 @@ masar/
 - [ ] Step 3: Run `pytest tests/unit/test_models.py` (verify pass).
 - [ ] Step 4: Commit.
 
-#### Task 1.4: Corpus Database Reader with Sectarian Filtering
-- **Failure Mode / Scenario**: Memory blowout when querying 925K records or failure to respect sectarian scoping flags (`all`, `sunni`, `shia`).
-- **Files**: `src/masar/core/corpus_db.py`, `tests/conftest.py`
-- [ ] Step 1: Write integration test: load sample SQLite database, query hadiths by collection, filter by sect, retrieve narrator chains.
-- [ ] Step 2: Implement `CorpusDatabase` with indexed queries, generator streaming (zero memory bloat), and sectarian filters.
-- [ ] Step 3: Run test and verify query response time < 50ms.
-- [ ] Step 4: Commit.
+#### Task 1.4: Pluggable Corpus Database Interface & Riwayat Adapter
+- **Failure Mode / Scenario**: Tightly coupling to `riwayat-corpus` schema prevents querying custom collections or unindexed books; memory blowout when querying 925K records; failure to respect sectarian scoping flags (`all`, `sunni`, `shia`).
+- **Files**: `src/masar/core/corpus_adapter.py`, `src/masar/core/corpus_db.py`, `tests/unit/test_corpus_db.py`
+- [ ] Step 1: Define `CorpusAdapter` protocol with abstract methods (`get_record`, `query_candidates`, `list_collections`).
+- [ ] Step 2: Write integration test: load sample SQLite database, query hadiths by collection, filter by sect, retrieve narrator chains via `RiwayatCorpusAdapter`.
+- [ ] Step 3: Implement `RiwayatCorpusAdapter` implementing `CorpusAdapter` with indexed queries, generator streaming (zero memory bloat), and sectarian filters.
+- [ ] Step 4: Run test and verify query response time < 50ms.
+- [ ] Step 5: Commit.
+
+#### Task 1.5: First-Class Manual Entry & Custom Dataset Ingestion (Solving FM-07)
+- **Failure Mode / Scenario**: Pasted raw manuscript text lacks isnad/matn split boundaries, causing matn pollution or missing narrator chains; custom JSON/CSV hadith datasets cannot be imported into the workspace.
+- **Files**: `src/masar/core/manual_entry.py`, `tests/e2e/test_e2e_manual_entry.py`, `tests/e2e/test_e2e_custom_corpus.py`
+- [ ] Step 1: Write failing E2E test `test_e2e_manual_entry.py`:
+  - Input: Raw unsegmented Arabic report with citation metadata ("حدثنا مسدد قال حدثنا يحيى عن شعبة عن قتادة عن أنس قال قال رسول الله...").
+  - Test heuristic boundary detector: verifies proposed `matn_start` index cleanly isolates the isnad formula.
+  - Test confirmation: stages manual record into active workspace with valid `source_ref` (`source_type: "print"`).
+  - Verify artifact output in `test-artifacts/manual_entry_verified.json`.
+- [ ] Step 2: Write failing E2E test `test_e2e_custom_corpus.py`:
+  - Ingest custom JSON/CSV file containing 50 traditions from a rare regional manuscript.
+  - Verify `CustomFileCorpusAdapter` indexes them for FTS search and parallel variant discovery.
+- [ ] Step 3: Implement `ManualEntryPipeline` (with heuristic splitter) and `CustomFileCorpusAdapter`.
+- [ ] Step 4: Run tests and verify 100% pass.
+- [ ] Step 5: Commit.
 
 ---
 
@@ -271,12 +291,14 @@ masar/
 - [ ] Step 4: Commit.
 
 #### Task 3.4: Agent-First CLI (`masar`)
-- **Failure Mode / Scenario**: Agent must make brittle HTTP calls or inspect complex JSON to perform basic takhrīj operations.
+- **Failure Mode / Scenario**: Agent must make brittle HTTP calls or inspect complex JSON to perform basic takhrīj operations; inability to manually add an external hadith or ingest a custom file from terminal.
 - **Files**: `src/masar/cli.py`
 - [ ] Step 1: Write failing CLI tests for:
   - `masar search --seed <text> --scope all --compact` (must return compact ASCII table under 300 tokens).
   - `masar inspect --id <hadith_id> --receipt` (must output JSON explainability receipt).
   - `masar split --id <hadith_id> --start <offset> --end <offset>`.
+  - `masar add --text <arabic_text> --collection <str> --ref <str>` (manual entry CLI).
+  - `masar ingest --source <path> --format [json|csv|sqlite]` (custom file ingestion CLI).
   - `masar session undo`.
 - [ ] Step 2: Implement CLI commands using `typer` and `rich`.
 - [ ] Step 3: Verify CLI tests pass with zero regression.
@@ -341,17 +363,18 @@ masar/
 - [ ] Step 1: Build `QueryBar` with Arabic input and Sunni/Shīʿī toggles.
 - [ ] Step 2: Build `CandidateList` displaying explainability badges and confidence scores.
 - [ ] Step 3: Build `SplitEditor` allowing 1-click boundary repositioning.
-- [ ] Step 4: Build `ExportModal` with one-click "Download Riwaq JSON" and "Copy Batch" actions.
-- [ ] Step 5: Test in browser / headless test and verify smooth interaction.
+- [ ] Step 4: Build `ManualEntryModal` allowing direct pasting of Arabic text, citation metadata entry, and heuristic split preview.
+- [ ] Step 5: Build `ExportModal` with one-click "Download Riwaq JSON" and "Copy Batch" actions.
+- [ ] Step 6: Test in browser / headless test and verify smooth interaction.
 
 ---
 
 ## 6. Preflight Gates & Acceptance Criteria
 
 Before claiming completion of any phase or shipping the system, the following criteria MUST be met:
-- [ ] All 5 Failure-Mode E2E tests in `tests/e2e/` pass with green output.
+- [ ] All 7 Failure-Mode E2E tests in `tests/e2e/` pass with green output.
 - [ ] Every E2E test has produced a verified, inspectable artifact in `test-artifacts/`.
-- [ ] The `masar` CLI is fully functional and supports `--compact` agent-lens views.
+- [ ] The `masar` CLI is fully functional and supports `--compact` agent-lens views, `masar add` manual entry, and `masar ingest`.
 - [ ] Generated batch JSON files validate 100% against `schemas/riwaq-import-batch.json` (`schema_version: 1`).
 - [ ] Codebase passes cyclomatic complexity checks (no function > 10 complexity; flat control flow).
 - [ ] Zero tautological or change-detector tests.

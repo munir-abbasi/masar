@@ -33,6 +33,7 @@ For **current runtime behavior**, source plus the closest tests outrank prose. `
 - **Reversible Agent Execution**: All session actions (`ADD`, `PRUNE`, `SPLIT`) must be recorded in an append-only, event-sourced journal supporting single-step rollback (`masar session undo`).
 - **Token-Thrifty Observability (Agent Lens)**: Triage queries must support a `--compact` mode returning high-density output under 300 tokens; full text and diff matrices are progressive disclosures on explicit request only.
 - **Deterministic Preflight Publication Gate**: A candidate bundle cannot be exported to Riwaq unless it passes all 4 deterministic gates (`GateSchema`, `GateFamilyConsistency`, `GateBoundaryHygiene`, `GateIsnadIntegrity`).
+- **Corpus Agnosticism & First-Class Manual Entry**: Masar is never coupled exclusively to `riwayat-corpus`. It accepts custom corpora (JSON, CSV, SQLite, directory of text files) and direct manual text entries with full boundary splitting and provenance.
 - **Zero Downstream Compensation**: Never compensate in Riwaq for an upstream boundary defect. Fix the split in Masar, record it in the accretive store, and export clean data.
 
 ### Invariant → Enforcement Evidence
@@ -40,6 +41,8 @@ For **current runtime behavior**, source plus the closest tests outrank prose. `
 | Invariant | Enforced in | Proven by |
 | :--- | :--- | :--- |
 | Raw corpus is index-only; CRF splits unverified | `src/masar/core/corpus_db.py` | `tests/unit/test_corpus_db.py` |
+| Corpus agnosticism & custom dataset ingestion | `src/masar/core/corpus_adapter.py` | `tests/e2e/test_e2e_custom_corpus.py` |
+| Manual entry with boundary splitting & provenance | `src/masar/core/manual_entry.py` | `tests/e2e/test_e2e_manual_entry.py` |
 | Decomposed score & Explainability Receipts | `src/masar/discovery/hybrid_engine.py` | `tests/unit/test_models.py` |
 | Topical False Positives Quarantined | `src/masar/discovery/hybrid_engine.py` | `tests/e2e/test_e2e_topic_trap.py` |
 | Taqṭīʿ (fragmentation) detected & aligned | `src/masar/discovery/pericope_aligner.py` | `tests/e2e/test_e2e_taqtic.py` |
@@ -55,7 +58,9 @@ For **current runtime behavior**, source plus the closest tests outrank prose. `
 | :--- | :--- |
 | Arabic Orthography Normalization | `src/masar/core/normalizer.py` |
 | Data Contracts & Explainability Models | `src/masar/core/models.py` |
-| Corpus Database Adapter & Sectarian Scoping | `src/masar/core/corpus_db.py` |
+| Pluggable Corpus Abstraction Interface | `src/masar/core/corpus_adapter.py` |
+| Riwayat-Corpus Adapter & Sectarian Scoping | `src/masar/core/corpus_db.py` |
+| Manual Entry & Ad-Hoc Record Ingestion | `src/masar/core/manual_entry.py` |
 | Lexical BM25 Search (FTS5) | `src/masar/discovery/fts_search.py` |
 | Pericope Alignment (Taqṭīʿ) | `src/masar/discovery/pericope_aligner.py` |
 | Dense Vector Semantic Similarity | `src/masar/discovery/semantic_search.py` |

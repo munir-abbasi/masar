@@ -43,7 +43,8 @@ When an autonomous AI agent operates a research and engineering toolchain, conve
                                          │
 ┌────────────────────────────────────────▼─────────────────────────────────────────┐
 │ LAYER 0: CORPUS SUBSTRATE & REPRESENTATION                                       │
-│ • Normalized Arabic Orthography • SQLite FTS5 Virtual Tables • Raw Corpora       │
+│ • Normalized Arabic Orthography • Pluggable Corpus Adapters (Riwayat, Custom,    │
+│   Manual Entry Scratchpad) • SQLite FTS5 Virtual Tables                          │
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -107,6 +108,11 @@ Before any bundle is emitted to Riwaq, it must pass through an automated **Prefl
 3. `GATE_BOUNDARY_HYGIENE`: Heuristic scan ensuring no narrator introductory markers (*ḥaddathanā*, *akhbaranā*, *ʿan*) remain inside the extracted `matn_raw`.
 4. `GATE_ISNAD_INTEGRITY`: Verification that each variant has a non-empty `isnad_chain` of identified transmitter IDs.
 
+### Pillar 6: Universal Data Ingestion & First-Class Manual Entry
+Masar is never bound solely to `riwayat-corpus`. It treats any input source as equal:
+- **Pluggable Corpus Adapters**: Pre-indexed `riwayat-corpus`, custom JSON/CSV collections, or raw text directories.
+- **First-Class Manual Entry**: An agent or scholar can paste raw Arabic text from a manuscript, printed edition, or website (`masar add` or Web Workbench), specify citation metadata (`collection`, `volume`, `page`), trigger an automated isnad/matn split proposal, adjust the boundary, and bundle the record alongside corpus-retrieved parallels.
+
 ---
 
 ## 3. Failure-Mode First Engineering Matrix
@@ -121,6 +127,7 @@ Following the user's strict testing rules, the entire system is built and tested
 | **FM-04: Taqṭīʿ (Fragment) Fragmentation** | A compiler cites a 1-line legal snippet of a 20-line hadith. Global Jaccard similarity is only 0.08. | Discovery engine misses critical legal variants of the tradition. | Sliding-window Pericope Aligner computes maximum local sub-sequence token alignment. | **E2E-TAQTIC-ALIGN**: Align 12-token excerpt against 150-token report; assert match detected with pericope confidence $> 0.85$. | `test-artifacts/taqtic_alignment_dump.json` |
 | **FM-05: Cross-Sectarian Asymmetry** | Sunni collections use *ḥaddathanā* / *ʿan* chains; Shīʿī collections (*al-Kāfī*) use Imām-anchored chains with distinct introductory formulas. | Parser or search fails when traversing cross-sectarian boundary. | Sectarian-agnostic canonical schema with specialized transmission formula recognizers for both traditions. | **E2E-CROSS-SECT-TAKRIJ**: Run search on *Hadith al-Thaqalayn*; retrieve variants across Sahih Muslim and al-Kāfī; bundle into single valid family. | `test-artifacts/cross_sectarian_family.json` |
 | **FM-06: Riwaq Ingestion Rejection** | Exported JSON has missing `source_ref.source_type` enum or inconsistent `family_id`. | Riwaq crashes on import or aborts analysis. | Deterministic `PreflightValidator` blocks export with exact line-level remediation hints. | **E2E-RIWAQ-GATE**: Generate export batch, run through strict JSON schema draft-07 validator; assert 100% pass. | `test-artifacts/riwaq_preflight_pass.json` |
+| **FM-07: Unstructured Manual Entry Contamination** | Pasted manual text lacks explicit boundary offsets or required provenance metadata. | Incomplete record corrupts downstream stemma or fails Riwaq intake. | `ManualEntryPipeline` applies interactive heuristic split assistant and requires valid `source_ref` before bundle admission. | **E2E-MANUAL-ENTRY**: Paste raw manuscript excerpt, run heuristic splitter, confirm split, export to Riwaq; verify valid record. | `test-artifacts/manual_entry_verified.json` |
 
 ---
 

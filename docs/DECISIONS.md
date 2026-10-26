@@ -81,3 +81,15 @@ This document is the permanent architectural ledger for Masar (مسار). It rec
 - **Context**: Hadiths on common topics (e.g., *Niyyah*, *Wudūʾ*, *Ṣalāt*) produce deceptively high cosine similarity in dense vector spaces even when they are completely distinct historical traditions.
 - **Decision**: If a candidate has high semantic cosine similarity ($> 0.80$) but low pericope overlap ($S_{jaccard} < 0.25$) and zero isnad hub overlap, quarantine it as `TOPICAL_FALSE_POSITIVE` and flag it in the triage view.
 - **Consequences**: Prevents thematic drift and keeps tradition bundles historically cohesive.
+
+
+---
+
+### D010: Pluggable Corpus Backend & First-Class Manual Ingestion
+- **Status**: Accepted
+- **Context**: While `riwayat-corpus` (~925K records) is an extraordinary pre-indexed baseline, scholars and agents frequently need to work with unindexed compendia, rare manuscripts, custom regional collections (e.g. Zaydī or Ibāḍī compendia, Musannaf Ibn Abī Shaybah editions), or simply paste an excerpt directly from a book or PDF. Tightly coupling Masar to `riwayat-corpus` SQLite schema would cripple research on unindexed sources.
+- **Decision**: 
+  1. Define a generic `CorpusAdapter` interface requiring only basic record extraction (`id`, `raw_text`, optional `isnad_span`, `matn_span`, and `source_ref`).
+  2. Implement a `RiwayatCorpusAdapter` for the pre-indexed 925K dataset, a `CustomFileCorpusAdapter` for user-supplied JSON/CSV/SQLite/text files, and an `InMemoryScratchpadAdapter` for ad-hoc manual entries.
+  3. Treat **Manual Entry** as a first-class citizen: an agent or user can paste raw text via CLI (`masar add`) or UI, trigger an automated boundary heuristic split, edit/confirm it, attach citation provenance, and seamlessly bundle it alongside corpus-retrieved variants.
+- **Consequences**: Masar operates seamlessly with or without `riwayat-corpus`. Any raw text can be ingested, aligned, verified, and exported to Riwaq.

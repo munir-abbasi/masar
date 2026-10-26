@@ -10,7 +10,7 @@ Masar is an ordered sequence of semantic commitments. Each layer consumes a lowe
 
 | Layer | Meaning | Canonical Owner | Rebuildable? | Critical Invariant |
 | :--- | :--- | :--- | :--- | :--- |
-| **L0 Substrate** | Raw corpus text, narrator spans, character indices, collections metadata | `riwayat-corpus` SQLite (`corpus_db.py`) | No | Immutable; never mutate raw corpus files |
+| **L0 Substrate** | Raw corpus text (`riwayat-corpus`, custom JSON/CSV/SQLite files, or manual text entries), character indices, provenance metadata | `corpus_adapter.py`, `corpus_db.py`, `manual_entry.py` | No | Immutable; never mutate raw corpus files |
 | **L1 Signals** | Normalized Arabic tokens, BM25 indices, sliding pericope alignments, dense embeddings, isnad hub graphs | `discovery/*` | Yes from L0 | Orthogonal metrics; explainability receipts must record all 4 signals |
 | **L2 Hypothesis** | Candidate parallel traditions, similarity rank, false-positive quarantine | `hybrid_engine.py` | Yes from L1 | Topical similarity without pericope or isnad overlap is quarantined |
 | **L3 Curation** | Isnad/matn boundary split states, persistent corrections, session event log | `verification/*`, `accretive_store.py` | Overrides are durable | Human/agent verified boundaries override noisy CRF model defaults permanently |
@@ -36,7 +36,7 @@ The web workbench is an interaction projection across L2–L4. It is not a separ
 
 ### 2.2 Agent Ergonomics (Optimal Control & Minimal Token Spend)
 - **Token-Thrifty Projections (`--compact`)**: Triage output presents tabular results with essential metrics only, consuming under 300 tokens instead of exhausting context with tens of thousands of raw Arabic words.
-- **Single-Hop Machine Control**: An agent inspects, filters, adjusts boundaries, and stages bundles via deterministic CLI commands (`masar search`, `masar inspect`, `masar split`, `masar bundle`).
+- **Single-Hop Machine Control**: An agent inspects, filters, adjusts boundaries, stages bundles, and ingests manual or custom data via deterministic CLI commands (`masar search`, `masar inspect`, `masar split`, `masar bundle`, `masar add`, `masar ingest`).
 - **Explainability Receipts**: Every ranked result includes an immutable mathematical decomposition ($S_{lex}, S_{peric}, S_{sem}, S_{isnad}$), allowing the agent to instantly diagnose false positives without multi-turn archaeology.
 - **Minimal-Read Envelope (§6)**: Context budgeting rules dictate reading only the owning file plus at most one upstream dependency and one test fixture.
 
@@ -115,6 +115,7 @@ To minimize context consumption and prevent cognitive overload, follow these min
 | Task Class | Read Set (Only read these files) |
 | :--- | :--- |
 | **Normalization / Tokenization** | `src/masar/core/normalizer.py`, `tests/unit/test_normalizer.py` |
+| **Corpus Adapters & Manual Entry** | `src/masar/core/corpus_adapter.py`, `src/masar/core/manual_entry.py`, `tests/e2e/test_e2e_manual_entry.py` |
 | **Database & Corpus Queries** | `src/masar/core/corpus_db.py`, `tests/unit/test_corpus_db.py` |
 | **Lexical Search (FTS5)** | `src/masar/discovery/fts_search.py`, `tests/unit/test_fts_search.py` |
 | **Pericope Alignment (Taqṭīʿ)** | `src/masar/discovery/pericope_aligner.py`, `tests/e2e/test_e2e_taqtic.py` |
@@ -136,4 +137,5 @@ To minimize context consumption and prevent cognitive overload, follow these min
 | "Does this record contain isnad bleed?"| `SplitEditor.check_bleed()` or `masar inspect --id <id> --field bleed` |
 | "What was the previous session state?"| `masar session history` |
 | "Is this bundle ready for Riwaq?" | `masar bundle validate --family-id <family_id>` (Preflight Gates) |
+| "How do I ingest custom data or a manual text?" | `masar ingest --source <path>` or `masar add --text <arabic_text>` |
 | "What are the active failure modes?" | `docs/ARCHITECTURE.md` §3 (Failure-Mode First Matrix) |

@@ -19,8 +19,9 @@
    - [Fixing Transmitter Names Leaking into the Hadith (Boundary Slider)](#3-fixing-transmitter-names-leaking-into-the-hadith-boundary-slider)
    - [Topical False Positives: What Does the Orange Badge Mean?](#4-topical-false-positives-what-does-the-orange-badge-mean)
    - [Exporting Your Curated Family Bundle](#5-exporting-your-curated-family-bundle)
-5. [Arabic Text & Encoding Tips](#arabic-text--encoding-tips)
-6. [Frequently Asked Questions](#frequently-asked-questions)
+5. [Takhrīj Features & Command Reference (CLI)](#takhrīj-features--command-reference-cli)
+6. [Arabic Text & Encoding Tips](#arabic-text--encoding-tips)
+7. [Frequently Asked Questions](#frequently-asked-questions)
 
 ---
 
@@ -175,6 +176,104 @@ Once you have verified all parallel variants of your hadith:
    - Ensures transmission chains are properly recorded.
    - Validates standard academic formatting.
 3. Save the clean JSON file. You can now use it in your research publication, share it with colleagues, or import it into [**Riwaq**](https://github.com/munir-abbasi/riwaq) to automatically generate Isnad-cum-Matn stemma tree diagrams.
+
+---
+
+## Takhrīj Features & Command Reference (CLI)
+
+While the Visual Workbench provides an intuitive point-and-click interface, the `masar` command-line tool provides fast, batch-capable commands for power users, terminal researchers, and automated workflows.
+
+### Summary of Takhrīj Features
+
+| Feature | Scholarly Purpose | How Masar Solves It |
+| :--- | :--- | :--- |
+| **Lexical Match (FTS5 BM25)** | Finding exact wording and phrases | Searches indexed words while stripping tashkeel and unifying alifs/hamzas. |
+| **Pericope Alignment (*Taqṭīʿ*)** | Finding excerpts and partial quotes | Uses sliding-window Jaccard comparison so a 1-sentence quote matches a 10-line tradition. |
+| **Semantic Matching (*Riwāyah bi-l-Maʿnā*)** | Finding paraphrased narrations | Matches narrations where different narrators substituted synonyms (e.g. `ذهب` vs `انطلق`). |
+| **Isnād Convergence** | Detecting Common Links (*Madār*) | Calculates overlap of Companions and early teachers across transmission chains. |
+| **Topic Trap Quarantine** | Preventing unrelated hadiths from polluting your bundle | Automatically quarantines texts that share broad legal topics (e.g., general prayer rulings) but lack lexical sequence or isnad overlap. |
+| **Accretive Overlay (`masar-curated.db`)** | Preserving boundary split fixes | Remembers narrator/hadith boundary edits permanently without altering original corpus files. |
+| **Event-Sourced Reversible Journal** | Audit trail & zero data loss | Every addition, split, or exclusion is recorded in an undoable history log. |
+
+---
+
+### Command-by-Command Reference
+
+#### 1. `masar search` — Discovering Variants
+Search across your hadith database using any Arabic seed phrase.
+
+```bash
+# Basic search: finds top 20 variants in your database
+masar search --db corpus.db --seed "إنما الأعمال بالنيات"
+
+# Restrict search by sectarian scope (all, sunni, or shia)
+masar search --db corpus.db --seed "من كنت مولاه" --scope shia
+masar search --db corpus.db --seed "طلب العلم فريضة" --scope sunni
+
+# View the detailed 4-signal Explainability Receipts
+masar search --db corpus.db --seed "إنما الأعمال بالنيات" --receipts
+
+# High-density compact view (< 300 tokens, ideal for terminals and agent contexts)
+masar search --db corpus.db --seed "إنما الأعمال بالنيات" --compact
+
+# Output structured JSON for data analysis or scripting
+masar search --db corpus.db --seed "إنما الأعمال بالنيات" --format json
+```
+
+#### 2. `masar inspect` — Examining a Specific Hadith
+Displays the complete record, including the separated isnād, the matn, the sectarian attribution, and the list of canonical narrator names.
+
+```bash
+# Inspect hadith with ID 1
+masar inspect --db corpus.db --id 1
+```
+
+*Example Output:*
+```text
+ID: 1
+Collection: sahih_bukhari (Hadith #1)
+Sect: sunni
+Isnad: حدثنا الحميدي عبد الله بن الزبير قال حدثنا سفيان...
+Matn: إنما الأعمال بالنيات وإنما لكل امرئ ما نوى...
+Narrators: al-Humaydi, Sufyan ibn Uyaynah, Yahya ibn Said, Muhammad ibn Ibrahim, Alqamah ibn Waqqas, Umar ibn al-Khattab
+```
+
+#### 3. `masar split` — Repairing Boundaries from the Terminal
+If an OCR scan or digital scrape accidentally merged part of the isnād into the matn, specify the exact character positions where the matn should start and end.
+
+```bash
+# Set matn start at character 112 and end at character 245
+masar split --db corpus.db --id 4 --start 112 --end 245
+```
+*Note: This does not alter `corpus.db`; it stores an accretive override in `masar-curated.db` that is automatically loaded during all future queries.*
+
+#### 4. `masar add` — Adding Manuscripts or Ad-Hoc Texts
+Add an unindexed report from a manuscript folio, printed article, or rare book. Masar automatically analyzes the transition words and suggests the isnād/matn split point.
+
+```bash
+masar add --text "حدثنا مسدد قال حدثنا يحيى عن شعبة قال أخبرني قتادة عن أنس عن النبي صلى الله عليه وسلم قال لا يؤمن أحدكم حتى يحب لأخيه ما يحب لنفسه" \
+          --collection "Musnad Abi Dawud al-Tayalisi" \
+          --ref "Page 42, Hadith #234" \
+          --family "fam_love_for_brother"
+```
+
+#### 5. `masar session undo` & `masar session history` — Reversible Workspace
+Safely experiment without fear of ruining your work.
+
+```bash
+# View all recent actions in your session
+masar session history
+
+# Revert the last action (undo an accidental add, split, or deletion)
+masar session undo
+```
+
+#### 6. `masar mcp` — Connecting Masar to AI Assistants
+Runs the native Model Context Protocol (MCP) server so AI coding assistants (Claude Desktop, Antigravity, OpenCode, Cursor) can query and analyze hadiths natively.
+
+```bash
+masar mcp --db corpus.db
+```
 
 ---
 

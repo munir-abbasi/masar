@@ -73,6 +73,26 @@ All 55 tests should pass in < 2 seconds, producing repeatable verification artif
 
 ## Usage Guide
 
+### 0. Quick Start for Non-Technical Researchers (No Coding Required)
+
+If you are a hadith scholar, historian, or digital humanities researcher without programming experience, Masar provides an interactive browser-based visual workbench:
+
+1. **Launch the Workbench**:
+   ```bash
+   masar web
+   ```
+   Open `http://localhost:5173` in your web browser.
+2. **Ingest Your Texts Easily**:
+   - **Spreadsheets (Excel / Google Sheets)**: Save your catalog as `CSV UTF-8` with columns `id`, `collection`, `matn`, and optional `isnad_raw`.
+   - **Direct Copy-Paste (Manuscripts / PDFs)**: Paste unsegmented Arabic passages directly; Masar automatically detects the transition point where the isnād ends and the matn begins.
+   - **Standard Databases**: Point directly to the [**riwayat-corpus**](https://github.com/abdullahansara/riwayat-corpus) SQLite archive (~925K records).
+3. **Visual Split Adjustment**: Drag the boundary slider to fix narrator names that bleed into the matn text; Masar saves all corrections into your personal accretive overlay (`masar-curated.db`) without touching your raw files.
+
+> [!TIP]
+> **Complete Guide for Scholars:** For spreadsheet templates, step-by-step screenshots, Arabic encoding tips, and non-technical troubleshooting, see the comprehensive [**Researcher & Scholar User Guide (USAGE.md)**](USAGE.md).
+
+---
+
 ### 1. Agent CLI (`masar`)
 
 The `masar` CLI is optimized for both human researchers and autonomous agents:
@@ -230,6 +250,7 @@ Masar is engineered failure-mode first. Every critical risk is guarded by automa
 masar/
 ├── pyproject.toml                     # Python dependencies, scripts, and build configuration
 ├── README.md                          # Comprehensive technical and developer documentation
+├── USAGE.md                           # Plain-language user guide for researchers and scholars
 ├── AGENTS.md                          # Agent operating guide, system invariants, and read paths
 ├── context.md                         # Domain background on hadith takhrīj & riwayat-corpus
 ├── docs/

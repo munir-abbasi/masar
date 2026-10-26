@@ -121,6 +121,12 @@ Masar is never bound solely to `riwayat-corpus`. It treats any input source as e
 - **Pluggable Corpus Adapters**: Pre-indexed `riwayat-corpus`, custom JSON/CSV collections, or raw text directories.
 - **First-Class Manual Entry**: An agent or scholar can paste raw Arabic text from a manuscript, printed edition, or website (`masar add` or Web Workbench), specify citation metadata (`collection`, `volume`, `page`), trigger an automated isnad/matn split proposal, adjust the boundary, and bundle the record alongside corpus-retrieved parallels.
 
+### Pillar 7: Native Model Context Protocol (MCP) & AI Tooling (D014, D015)
+To empower autonomous AI agents (Claude, Gemini, Antigravity, OpenCode) to drive takhrīj without terminal scraping:
+- **Native MCP Stdio Server (`masar mcp`)**: Exposes discovery, inspection, boundary adjustment, and export as typed JSON-RPC tools (`masar_search`, `masar_inspect`, `masar_adjust_split`, `masar_add_manual`, `masar_stage_variant`, `masar_preflight_validate`, `masar_export_riwaq`).
+- **AI Proposal Staging Buffer (`ProposalStore`)**: Protects the accretive store against hallucination. Agent proposals enter an isolated staging area with SHA-256 operation receipts, requiring deterministic preflight gate validation before permanent curation.
+- **Agent Skill Package**: Provides a plug-and-play agent skill (`skills/masar-takhrij/SKILL.md`) discoverable by local agent tooling (`skillctl`, OpenCode, Antigravity).
+
 ---
 
 ## 3. Failure-Mode First Engineering Matrix
@@ -136,6 +142,7 @@ Following the user's strict testing rules, the entire system is built and tested
 | **FM-05: Cross-Sectarian Asymmetry** | Sunni collections use *ḥaddathanā* / *ʿan* chains; Shīʿī collections (*al-Kāfī*) use Imām-anchored chains with distinct introductory formulas. | Parser or search fails when traversing cross-sectarian boundary. | Sectarian-agnostic canonical schema with specialized transmission formula recognizers for both traditions. | **E2E-CROSS-SECT-TAKRIJ**: Run search on *Hadith al-Thaqalayn*; retrieve variants across Sahih Muslim and al-Kāfī; bundle into single valid family. | `test-artifacts/cross_sectarian_family.json` |
 | **FM-06: Riwaq Ingestion Rejection** | Exported JSON has missing `source_ref.source_type` enum or inconsistent `family_id`. | Riwaq crashes on import or aborts analysis. | Deterministic `PreflightValidator` blocks export with exact line-level remediation hints. | **E2E-RIWAQ-GATE**: Generate export batch, run through strict JSON schema draft-07 validator; assert 100% pass. | `test-artifacts/riwaq_preflight_pass.json` |
 | **FM-07: Unstructured Manual Entry Contamination** | Pasted manual text lacks explicit boundary offsets or required provenance metadata. | Incomplete record corrupts downstream stemma or fails Riwaq intake. | `ManualEntryPipeline` applies interactive heuristic split assistant and requires valid `source_ref` before bundle admission. | **E2E-MANUAL-ENTRY**: Paste raw manuscript excerpt, run heuristic splitter, confirm split, export to Riwaq; verify valid record. | `test-artifacts/manual_entry_verified.json` |
+| **FM-08: AI Proposal Hallucination & Staging Drift** | Agent-suggested boundary split or narrator merge is inaccurate or ungrounded. | Pollutes the accretive store (`masar-curated.db`) with hallucinated ground truth. | `ProposalStore` isolates agent interventions; enforces preflight gates and SHA-256 operation receipts before permanent curation. | **E2E-AI-STAGING**: Agent submits boundary proposal, stages in ProposalStore, runs preflight gate, rejects invalid proposal; assert store remains pristine. | `test-artifacts/ai_proposal_staged.json` |
 
 ---
 

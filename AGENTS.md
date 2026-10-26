@@ -7,11 +7,12 @@ This file contains project-specific facts, invariants, and operating constraints
 - **Product**: Masar (مسار), a high-precision, agent-ergonomic Hadith Takhrīj (variant discovery and bundling) engine.
 - **Ecosystem Role**: Upstream feeder for **Riwaq** (Isnad-cum-Matn Analysis engine). Masar identifies, aligns, and bundles variant traditions into verified `family_id` bundles; Riwaq analyzes stemmas, CL/PCLs, and matn apparatuses.
 - **Core Technology**: Python 3.11+, SQLite (FTS5 + JSON1), FastEmbed/ONNX (CPU dense embeddings), FastAPI, Typer (`masar` CLI), and Vite/React for the verification workbench.
-- **Primary CLI**: `masar` (`src/masar/cli.py`) with `--compact`, `--format json`, and `--receipts`.
+- **Primary CLI & Interfaces**: `masar` (`src/masar/cli.py`) with `--compact`, `--format json`, and `--receipts`; native Model Context Protocol stdio server `masar mcp` (`src/masar/mcp_server.py`).
 - **Authoritative Schemas**:
   - Ingestion & Corpus: `src/masar/core/models.py`.
   - Downstream Interop: `schemas/riwaq-import-batch.json` and `schemas/riwaq-hadith-record.json` (`schema_version: 1`).
 - **Persistent Accretion Store**: `masar-curated.db` (stores verified boundaries, narrator corrections, and false-positive quarantines).
+- **AI Proposal Staging Buffer**: `src/masar/verification/proposal_store.py` (non-destructive staging for agent extractions and proposals).
 
 ## Read Path
 
@@ -34,6 +35,7 @@ For **current runtime behavior**, source plus the closest tests outrank prose. `
 - **Token-Thrifty Observability (Agent Lens)**: Triage queries must support a `--compact` mode returning high-density output under 300 tokens; full text and diff matrices are progressive disclosures on explicit request only.
 - **Deterministic Preflight Publication Gate**: A candidate bundle cannot be exported to Riwaq unless it passes all 4 deterministic gates (`GateSchema`, `GateFamilyConsistency`, `GateBoundaryHygiene`, `GateIsnadIntegrity`).
 - **Corpus Agnosticism & First-Class Manual Entry**: Masar is never coupled exclusively to `riwayat-corpus`. It accepts custom corpora (JSON, CSV, SQLite, directory of text files) and direct manual text entries with full boundary splitting and provenance.
+- **Non-Destructive AI Proposal Staging**: Agent-suggested boundary adjustments, variant groupings, and narrator merges must pass through the staging buffer (`ProposalStore`) before being permanently committed to `masar-curated.db`.
 - **Zero Downstream Compensation**: Never compensate in Riwaq for an upstream boundary defect. Fix the split in Masar, record it in the accretive store, and export clean data.
 
 ### Invariant → Enforcement Evidence
@@ -49,6 +51,8 @@ For **current runtime behavior**, source plus the closest tests outrank prose. `
 | Accretive boundary overrides persistent | `src/masar/verification/accretive_store.py` | `tests/e2e/test_e2e_bleed_repair.py` |
 | Reversible session journal & undo | `src/masar/verification/session_store.py` | `tests/unit/test_session_store.py` |
 | Token-thrifty agent CLI projections | `src/masar/cli.py` | `tests/unit/test_cli.py` |
+| Native MCP stdio server & tool calls | `src/masar/mcp_server.py` | `tests/unit/test_mcp_server.py` |
+| Non-destructive AI proposal staging | `src/masar/verification/proposal_store.py` | `tests/e2e/test_e2e_ai_staging.py` |
 | Riwaq schema_version: 1 preflight gate | `src/masar/export/preflight_gates.py` | `tests/e2e/test_e2e_riwaq_gate.py` |
 | Cross-sectarian takhrij parity | `src/masar/discovery/hybrid_engine.py` | `tests/e2e/test_e2e_cross_sect.py` |
 
@@ -68,6 +72,15 @@ For **current runtime behavior**, source plus the closest tests outrank prose. `
 | Multi-Signal Ensemble & Triage | `src/masar/discovery/hybrid_engine.py` |
 | Boundary Split Editor & Bleed Guard | `src/masar/verification/split_editor.py` |
 | Accretive Ground Truth Store | `src/masar/verification/accretive_store.py` |
+| Event-Sourced Workspace Journal | `src/masar/verification/session_store.py` |
+| AI Proposal Staging Buffer | `src/masar/verification/proposal_store.py` |
+| Agent Control Projections (Manifest, Snapshot) | `src/masar/agent_control.py` |
+| Model Context Protocol (MCP) Stdio Server | `src/masar/mcp_server.py` |
+| Preflight Verification Gates | `src/masar/export/preflight_gates.py` |
+| Riwaq ImportBatch Serializer | `src/masar/export/riwaq_exporter.py` |
+| Agent Control CLI | `src/masar/cli.py` |
+| REST API Endpoints | `src/masar/api/routes.py` |
+| Verification Workbench UI | `src/web/src/App.tsx` |
 | Event-Sourced Workspace Journal | `src/masar/verification/session_store.py` |
 | Preflight Verification Gates | `src/masar/export/preflight_gates.py` |
 | Riwaq ImportBatch Serializer | `src/masar/export/riwaq_exporter.py` |

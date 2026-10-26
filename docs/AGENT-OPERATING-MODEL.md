@@ -14,7 +14,7 @@ Masar is an ordered sequence of semantic commitments. Each layer consumes a lowe
 | **L1 Signals** | Normalized Arabic tokens, BM25 indices, sliding pericope alignments, dense embeddings, isnad hub graphs | `discovery/*` | Yes from L0 | Orthogonal metrics; explainability receipts must record all 4 signals |
 | **L2 Hypothesis** | Candidate parallel traditions, similarity rank, false-positive quarantine | `hybrid_engine.py` | Yes from L1 | Topical similarity without pericope or isnad overlap is quarantined |
 | **L3 Curation** | Isnad/matn boundary split states, persistent corrections, session event log | `verification/*`, `accretive_store.py` | Overrides are durable | Human/agent verified boundaries override noisy CRF model defaults permanently |
-| **L4 Control** | Single-hop CLI commands, compact token-thrifty projections, explainability receipts, session undo | `cli.py`, `models.py` | Yes | Triage queries output < 300 tokens; every action is atomic and reversible |
+| **L4 Control** | Single-hop CLI commands, native Model Context Protocol (MCP) stdio server (`mcp_server.py`), AI Proposal Staging Buffer (`proposal_store.py`), compact token-thrifty projections, explainability receipts, session undo | `cli.py`, `mcp_server.py`, `proposal_store.py`, `agent_control.py` | Yes | Triage queries output < 300 tokens; every action is atomic and reversible |
 | **L5 Interop** | Canonical Riwaq `import-batch.json` (`schema_version: 1`), preflight gates | `export/*`, `preflight_gates.py` | Yes from L3 | Zero schema defects; identical `family_id` across all records in a batch |
 
 The web workbench is an interaction projection across L2–L4. It is not a separate truth source.
@@ -44,6 +44,20 @@ The web workbench is an interaction projection across L2–L4. It is not a separ
 - **The Accretive Store (`masar-curated.db`)**: Every split boundary correction performed by an agent or researcher is permanently indexed. Future queries automatically consult this store, continuously elevating the quality of the 925K corpus.
 - **Reversible Event-Sourced Journal**: All session operations (`ADD_VARIANT`, `EXCLUDE_VARIANT`, `ADJUST_SPLIT`) append to an immutable log with SHA-256 proofs, supporting atomic undo/redo.
 - **Zero Knowledge Drift**: `docs/DECISIONS.md` records all durable constraints; `docs/STATUS.md` records real-time verified capabilities.
+
+### 2.4 Native Model Context Protocol (MCP) Server (D014)
+Masar exposes its full capabilities over stdio JSON-RPC 2.0 via `masar mcp`, allowing autonomous AI agents (Claude, Gemini, Antigravity, OpenCode) to drive takhrīj via first-class tool calls:
+- `masar_search`: Multi-modal search (text, authority, hub, sectarian scope) returning high-density candidate summaries with Explainability Receipts.
+- `masar_inspect`: Single-hadith deep inspection (raw text, parsed isnad chain, parsed matn, bleed diagnosis).
+- `masar_adjust_split`: Reposition boundary offsets and token anchors with automatic heuristic validation.
+- `masar_add_manual`: Ingest manual text or manuscript passage with citation metadata.
+- `masar_stage_variant`: Stage/unstage variants in the active `family_id` bundle.
+- `masar_preflight_validate`: Deterministically test the 4 publication gates and return machine-actionable remediation instructions.
+- `masar_export_riwaq`: Export validated `schema_version: 1` `import-batch.json`.
+- `masar_diagnose`: Cross-layer health evaluation across the Abstraction Tower ($L_0 \to L_5$).
+
+### 2.5 AI Proposal Staging Buffer & Non-Destructive Interventions (D015)
+To prevent LLM hallucination from contaminating the accretive ground-truth store (`masar-curated.db`), all agent-suggested boundary adjustments, variant groupings, and narrator merges enter a non-destructive staging buffer (`ProposalStore`) with SHA-256 operation receipts. Staged proposals must pass all 4 deterministic preflight gates before being committed to persistent storage.
 
 ---
 
@@ -123,7 +137,9 @@ To minimize context consumption and prevent cognitive overload, follow these min
 | **Hybrid Ranking & Triage** | `src/masar/discovery/hybrid_engine.py`, `tests/e2e/test_e2e_topic_trap.py` |
 | **Boundary Split & Bleed Guard**| `src/masar/verification/split_editor.py`, `tests/e2e/test_e2e_bleed_repair.py` |
 | **Accretive Ground Truth** | `src/masar/verification/accretive_store.py`, `tests/unit/test_accretive_store.py` |
-| **Agent CLI** | `src/masar/cli.py`, `tests/unit/test_cli.py` |
+| **AI Proposal Staging Buffer** | `src/masar/verification/proposal_store.py`, `tests/e2e/test_e2e_ai_staging.py` |
+| **Agent CLI & Projections** | `src/masar/cli.py`, `src/masar/agent_control.py`, `tests/unit/test_cli.py` |
+| **Model Context Protocol (MCP)**| `src/masar/mcp_server.py`, `tests/unit/test_mcp_server.py` |
 | **Riwaq Preflight Gates** | `src/masar/export/preflight_gates.py`, `tests/e2e/test_e2e_riwaq_gate.py`, `schemas/riwaq-import-batch.json` |
 
 ---

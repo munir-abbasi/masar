@@ -130,3 +130,26 @@ This document is the permanent architectural ledger for Masar (مسار). It rec
   - `enrich_family_id`: optional target family to enrich
   - `min_confidence`: float threshold (default 0.60)
 - **Consequences**: A single unified search interface serves keyword search, transmitter search, topical search, and bundle enrichment.
+
+
+---
+
+### D014: Native Model Context Protocol (MCP) Stdio Server & Agent Tooling
+- **Status**: Accepted
+- **Context**: In modern AI coding and research workflows, agents (Claude, Gemini, Antigravity, Cursor, OpenCode) interact with complex engines via the Model Context Protocol (MCP). Relying solely on shell command execution or terminal scraping introduces parsing fragility, token inefficiency, and lack of typed JSON-RPC contracts.
+- **Decision**: 
+  1. Implement a native MCP stdio server in Python (`src/masar/mcp_server.py`) executable via `masar mcp`.
+  2. Expose the core Takhrīj capabilities as first-class MCP tools: `masar_search`, `masar_inspect`, `masar_adjust_split`, `masar_add_manual`, `masar_stage_variant`, `masar_preflight_validate`, `masar_export_riwaq`, and `masar_diagnose`.
+  3. Export a standard agent skill manifest (`skills/masar-takhrij/SKILL.md`) so that local agent tooling (e.g. `skillctl`, OpenCode, Antigravity) can seamlessly discover and load Masar into any active session.
+- **Consequences**: Autonomous AI agents can drive and verify the entire takhrīj lifecycle via structured JSON-RPC tool calls with zero terminal scraping.
+
+---
+
+### D015: AI Proposal Staging Buffer for Non-Destructive Agent Interventions
+- **Status**: Accepted
+- **Context**: When an AI agent performs extraction, proposes narrator merges, or shifts isnad/matn boundaries, hallucinated or inaccurate boundaries could contaminate the persistent `masar-curated.db` store.
+- **Decision**: Implement an **AI Proposal Staging Buffer** (`ProposalStore`):
+  1. All agent-suggested boundary adjustments, variant groupings, and narrator merges enter the staging buffer as pending proposals with SHA-256 operation receipts.
+  2. Proposals must pass the 4 deterministic preflight gates before being committed to `masar-curated.db`.
+  3. A human researcher or reviewer can inspect, approve, or reject staged proposals in a single click in the Workbench UI or via `masar proposal approve <id>`.
+- **Consequences**: Complete immunity against AI hallucination pollution in the accretive ground truth store; full scholarly audit trail for every machine intervention.

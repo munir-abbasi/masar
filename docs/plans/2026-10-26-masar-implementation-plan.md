@@ -97,7 +97,9 @@ masar/
 ├── src/
 │   ├── masar/
 │   │   ├── __init__.py
-│   │   ├── cli.py                     # Agent-First CLI (masar search, inspect, split, export)
+│   │   ├── cli.py                     # Agent-First CLI (masar search, inspect, split, export, mcp)
+│   │   ├── mcp_server.py              # Native Model Context Protocol (MCP) stdio server (D014)
+│   │   ├── agent_control.py           # Agent projections (manifest, snapshot, diagnose, impact)
 │   │   ├── core/
 │   │   │   ├── __init__.py
 │   │   │   ├── normalizer.py          # Arabic text & diacritic normalization (pure logic)
@@ -116,6 +118,7 @@ masar/
 │   │   │   ├── __init__.py
 │   │   │   ├── session_store.py       # Event-sourced workspace journal (undo/redo)
 │   │   │   ├── accretive_store.py     # Persistent curated overrides (masar-curated.db)
+│   │   │   ├── proposal_store.py      # AI Proposal Staging Buffer & Replay Receipts (D015)
 │   │   │   └── split_editor.py        # Boundary adjustment & heuristic bleed guard
 │   │   ├── export/
 │   │   │   ├── __init__.py
@@ -125,18 +128,22 @@ masar/
 │   │       ├── __init__.py
 │   │       ├── app.py                 # FastAPI application
 │   │       └── routes.py              # Agent-ergonomic REST endpoints
-│   └── web/                           # Vite + React Verification Workbench
-│       ├── package.json
-│       ├── vite.config.ts
-│       └── src/
-│           ├── App.tsx
-│           ├── components/
-│           │   ├── QueryBar.tsx
-│           │   ├── CandidateList.tsx
-│           │   ├── DiffViewer.tsx
-│           │   ├── SplitEditor.tsx
-│           │   └── ExportModal.tsx
-│           └── api/client.ts
+│   ├── web/                           # Vite + React Verification Workbench
+│   │   ├── package.json
+│   │   ├── vite.config.ts
+│   │   └── src/
+│   │       ├── App.tsx
+│   │       ├── components/
+│   │       │   ├── QueryBar.tsx
+│   │       │   ├── CandidateList.tsx
+│   │       │   ├── DiffViewer.tsx
+│   │       │   ├── SplitEditor.tsx
+│   │       │   ├── ManualEntryModal.tsx
+│   │       │   └── ExportModal.tsx
+│   │       └── api/client.ts
+├── skills/
+│   └── masar-takhrij/
+│       └── SKILL.md                   # Masar agent skill specification for ai-tools
 └── tests/
     ├── conftest.py                    # Multi-sectarian hadith fixtures & mock databases
     ├── e2e/
@@ -146,11 +153,13 @@ masar/
     │   ├── test_e2e_topic_trap.py     # FM-03: Topical false positive rejection E2E
     │   ├── test_e2e_riwaq_gate.py     # FM-06: Riwaq preflight gate validation E2E
     │   ├── test_e2e_manual_entry.py   # FM-07: Manual text entry & heuristic split E2E
-    │   └── test_e2e_custom_corpus.py  # FM-07: Custom JSON/CSV corpus ingestion E2E
+    │   ├── test_e2e_custom_corpus.py  # FM-07: Custom JSON/CSV corpus ingestion E2E
+    │   └── test_e2e_ai_staging.py     # FM-08: AI Proposal Staging Buffer & Drift Guard E2E
     └── unit/
         ├── test_normalizer.py         # Pure logic: Arabic diacritics & ligatures
         ├── test_models.py             # Schema serialization & receipt integrity
-        └── test_pericope_aligner.py   # Sliding window Jaccard mathematics
+        ├── test_pericope_aligner.py   # Sliding window Jaccard mathematics
+        └── test_mcp_server.py         # Model Context Protocol tool execution tests
 ```
 
 ---
@@ -304,6 +313,35 @@ masar/
 - [ ] Step 3: Verify CLI tests pass with zero regression.
 - [ ] Step 4: Commit.
 
+#### Task 3.5: AI Proposal Staging Buffer & Drift Guard (Solving FM-08, D015)
+- **Failure Mode / Scenario**: Autonomous agent submits hallucinated boundary splits or unverified variant merges that pollute the persistent `masar-curated.db` store.
+- **Files**: `src/masar/verification/proposal_store.py`, `tests/e2e/test_e2e_ai_staging.py`
+- [ ] Step 1: Write failing E2E test `test_e2e_ai_staging.py`:
+  - Agent proposes boundary split and variant grouping.
+  - Assert that proposal is held in staging buffer (`ProposalStore`) with SHA-256 operation receipt.
+  - Test preflight gate check on proposal: invalid proposals are blocked from merging into `masar-curated.db`.
+  - Test approved proposal: merges cleanly into accretive store and is visible to subsequent queries.
+- [ ] Step 2: Implement `ProposalStore` with typed proposal lifecycle (`PENDING`, `PREFLIGHT_PASSED`, `COMMITTED`, `REJECTED`).
+- [ ] Step 3: Run `pytest tests/e2e/test_e2e_ai_staging.py`.
+- [ ] Step 4: Assert artifact written to `test-artifacts/ai_proposal_staged.json`.
+- [ ] Step 5: Commit.
+
+#### Task 3.6: Native Model Context Protocol (MCP) Server & Agent Control Projections (D014)
+- **Failure Mode / Scenario**: AI coding agents cannot discover or execute Masar tools over standard JSON-RPC 2.0 stdio protocols, or require brittle shell pipes without typed schemas.
+- **Files**: `src/masar/mcp_server.py`, `src/masar/agent_control.py`, `tests/unit/test_mcp_server.py`
+- [ ] Step 1: Write unit tests verifying MCP stdio tools:
+  - `masar_search` (multi-modal query with explainability receipts)
+  - `masar_inspect` (hadith text, parsed chains, bleed check)
+  - `masar_adjust_split` (dual anchor-offset split update)
+  - `masar_add_manual` (manual entry ingestion)
+  - `masar_preflight_validate` (deterministic 4 gates)
+  - `masar_export_riwaq` (schema_version: 1 batch)
+  - `masar_diagnose` (cross-layer health report)
+- [ ] Step 2: Implement `src/masar/agent_control.py` providing machine projections (`manifest`, `snapshot`, `diagnose`, `impact`).
+- [ ] Step 3: Implement `src/masar/mcp_server.py` exposing MCP stdio JSON-RPC server callable via `masar mcp`.
+- [ ] Step 4: Run `pytest tests/unit/test_mcp_server.py` (verify 100% pass).
+- [ ] Step 5: Commit.
+
 ---
 
 ### Phase 4: Riwaq Export Engine & Preflight Verification Gates
@@ -367,14 +405,26 @@ masar/
 - [ ] Step 5: Build `ExportModal` with one-click "Download Riwaq JSON" and "Copy Batch" actions.
 - [ ] Step 6: Test in browser / headless test and verify smooth interaction.
 
+#### Task 5.3: Masar Agent Skill Package for `ai-tools` Ecosystem
+- **Files**: `skills/masar-takhrij/SKILL.md`
+- [ ] Step 1: Author standard skill definition with frontmatter (`name: masar-takhrij`, `description: High-precision hadith takhrij and variant bundling engine`).
+- [ ] Step 2: Document standard agent workflows: seed discovery, boundary split inspection, cross-sectarian clustering, and Riwaq export.
+- [ ] Step 3: Register skill for local discovery by `skillctl` and local coding agents.
+- [ ] Step 4: Commit.
+
 ---
 
 ## 6. Preflight Gates & Acceptance Criteria
 
 Before claiming completion of any phase or shipping the system, the following criteria MUST be met:
-- [ ] All 7 Failure-Mode E2E tests in `tests/e2e/` pass with green output.
+- [ ] All 8 Failure-Mode E2E tests in `tests/e2e/` pass with green output.
 - [ ] Every E2E test has produced a verified, inspectable artifact in `test-artifacts/`.
 - [ ] The `masar` CLI is fully functional and supports `--compact` agent-lens views, `masar add` manual entry, and `masar ingest`.
+- [ ] The native Model Context Protocol (MCP) server runs via `masar mcp` and passes JSON-RPC compliance tests.
+- [ ] The AI Proposal Staging Buffer (`ProposalStore`) isolates agent interventions with SHA-256 operation receipts.
+- [ ] Generated batch JSON files validate 100% against `schemas/riwaq-import-batch.json` (`schema_version: 1`).
+- [ ] Codebase passes cyclomatic complexity checks (no function > 10 complexity; flat control flow).
+- [ ] Zero tautological or change-detector tests.
 - [ ] Generated batch JSON files validate 100% against `schemas/riwaq-import-batch.json` (`schema_version: 1`).
 - [ ] Codebase passes cyclomatic complexity checks (no function > 10 complexity; flat control flow).
 - [ ] Zero tautological or change-detector tests.

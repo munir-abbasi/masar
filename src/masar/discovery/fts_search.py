@@ -30,13 +30,14 @@ class FtsSearchEngine:
         if cursor.fetchone()[0] == 0:
             cursor.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='hadiths'")
             if cursor.fetchone()[0] > 0:
-                cursor.execute(
-                    """
-                    INSERT INTO hadiths_fts(record_id, normalized_matn, collection, sect)
-                    SELECT id, COALESCE(normalized_matn, matn), collection, sect
-                    FROM hadiths
-                    """
-                )
+                cursor.execute("SELECT id, matn, collection, sect FROM hadiths")
+                rows = cursor.fetchall()
+                for rid, matn, coll, sect in rows:
+                    norm = normalize_arabic(matn)
+                    cursor.execute(
+                        "INSERT INTO hadiths_fts(record_id, normalized_matn, collection, sect) VALUES (?, ?, ?, ?)",
+                        (str(rid), norm, coll, sect),
+                    )
                 self.conn.commit()
 
     def index_record(
@@ -81,7 +82,7 @@ class FtsSearchEngine:
 
         where_sql = f"WHERE {' AND '.join(clauses)}"
         sql = f"""
-            SELECT record_id, bm25(hadiths_fts) as rank
+            SELECT record_id, bm25(hadiths_fts) as rank, normalized_matn
             FROM hadiths_fts
             {where_sql}
             ORDER BY rank
@@ -94,10 +95,18 @@ class FtsSearchEngine:
         rows = cursor.fetchall()
 
         results: list[tuple[str, float]] = []
-        for rid, rank in rows:
+        query_set = set(tokens)
+
+        for rid, rank, matn in rows:
             # SQLite FTS5 bm25 returns negative score (lower/more negative = better)
             raw_bm25 = abs(float(rank))
-            norm_score = raw_bm25 / (1.0 + raw_bm25)
-            results.append((str(rid), round(norm_score, 4)))
+            bm25_score = raw_bm25 / (1.0 + raw_bm25) if raw_bm25 > 0.01 else 0.0
+
+            # Complement with token overlap ratio to resist small-corpus IDF skew
+            doc_tokens = set(tokenize_arabic(matn))
+            overlap_ratio = len(query_set & doc_tokens) / len(query_set) if query_set else 0.0
+
+            score = max(bm25_score, overlap_ratio)
+            results.append((str(rid), round(score, 4)))
 
         return results

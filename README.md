@@ -2,7 +2,7 @@
 
 **High-Precision, Agent-Ergonomic Hadith Takhrīj & Variant Bundling Engine**
 
-Masar bridges unbundled hadith corpora (such as `riwayat-corpus` with ~925,000 records, custom JSON/CSV collections, and raw manuscript transcriptions) into verified, gate-checked `family_id` bundles. Built as the upstream feeder for **Riwaq** (the Isnad-cum-Matn Analysis and stemma engine), Masar guarantees 100% schema compliance (`schema_version: 1`) and protects downstream ICMA analysis against boundary bleed, homonym traps, and topical false positives.
+Masar bridges unbundled hadith corpora (such as `riwayat-corpus` with ~925,000 records, custom JSON/CSV collections, and raw manuscript transcriptions) into verified, gate-checked `family_id` bundles. Built as the upstream feeder for [**Riwaq**](https://github.com/munir-abbasi/riwaq) (the Isnad-cum-Matn Analysis and stemma engine), Masar guarantees 100% schema compliance (`schema_version: 1`) and protects downstream ICMA analysis against boundary bleed, homonym traps, and topical false positives.
 
 ---
 
@@ -288,7 +288,7 @@ masar/
 
 ## Downstream Ecosystem Integration: Riwaq
 
-Masar is designed to operate seamlessly upstream from **Riwaq** ([`Isnad-builder`](/home/meer/Projects/Isnad-builder)):
+Masar is designed to operate seamlessly upstream from [**Riwaq**](https://github.com/munir-abbasi/riwaq) (Isnad-cum-Matn Analysis & Stemma Engine):
 
 1. **Discovery (Masar)**: Discovers, verifies, and bundles candidate variants across Sunni and Shīʿī collections into a unified family bundle.
 2. **Preflight Gating (Masar)**: Validates boundary hygiene, family consistency, and schema compliance.

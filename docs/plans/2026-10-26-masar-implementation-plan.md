@@ -181,11 +181,11 @@ masar/
 - [ ] Step 5: Check cyclomatic complexity (must be <= 8, flat loops).
 - [ ] Step 6: Commit.
 
-#### Task 1.3: Data Contracts & Explainability Receipts
-- **Failure Mode / Scenario**: Incompatible JSON serialization or loss of explanation provenance during discovery.
+#### Task 1.3: Data Contracts, Multi-Modal Query & Explainability Receipts
+- **Failure Mode / Scenario**: Incompatible JSON serialization, loss of explanation provenance during discovery, or rigid queries that cannot accept companion/hub anchors or family enrichment targets.
 - **Files**: `src/masar/core/models.py`, `tests/unit/test_models.py`
-- [ ] Step 1: Write failing tests verifying that Pydantic models validate Riwaq `import-batch.json` and generate `ExplainabilityReceipt` objects.
-- [ ] Step 2: Implement models: `CandidateRecord`, `ExplainabilityReceipt`, `SplitState`, `ImportBatch`, `HadithRecord`, `IsnadVariant`.
+- [ ] Step 1: Write failing tests verifying that Pydantic models validate Riwaq `import-batch.json`, serialize `ExplainabilityReceipt` objects, accept multi-modal `TakhrijQuery`, and represent `SplitBoundary` with dual character-offset and token-anchor contracts.
+- [ ] Step 2: Implement models: `TakhrijQuery`, `SplitBoundary`, `CandidateRecord`, `ExplainabilityReceipt`, `SplitState`, `ImportBatch`, `HadithRecord`, `IsnadVariant`.
 - [ ] Step 3: Run `pytest tests/unit/test_models.py` (verify pass).
 - [ ] Step 4: Commit.
 
@@ -265,20 +265,20 @@ masar/
 ### Phase 3: Verification Layer, Accretive Store & Agent CLI
 *Objective: Empower the agent to inspect candidates with minimal tokens, adjust noisy boundaries, and persist curated ground truth.*
 
-#### Task 3.1: Boundary Split Editor & Heuristic Bleed Guard (Solving FM-01)
-- **Failure Mode / Scenario**: CRF parser mistakenly places narrator names or *ḥaddathanā* into the matn.
+#### Task 3.1: Dual Anchor-Offset Boundary Split Editor & Heuristic Bleed Guard (Solving FM-01, D012)
+- **Failure Mode / Scenario**: CRF parser mistakenly places narrator names or *ḥaddathanā* into the matn; boundary drift occurs when character offsets shift due to normalization or tashkeel variation.
 - **Files**: `src/masar/verification/split_editor.py`, `tests/e2e/test_e2e_bleed_repair.py`
-- [ ] Step 1: Write failing E2E test `test_e2e_bleed_repair.py`: load a corrupted hadith record where the first 5 words of matn contain isnad formulas. Assert that `HeuristicBoundaryGuard` detects the bleed and `SplitEditor` cleanly adjusts the character slice.
-- [ ] Step 2: Implement `SplitEditor` and `HeuristicBoundaryGuard`.
+- [ ] Step 1: Write failing E2E test `test_e2e_bleed_repair.py`: load a corrupted hadith record where the first 5 words of matn contain isnad formulas. Assert that `HeuristicBoundaryGuard` detects the bleed and `SplitEditor` cleanly adjusts the slice using dual character-offset and pivot token-anchor verification (`pre_matn_token`, `post_isnad_token`).
+- [ ] Step 2: Implement `SplitEditor` (supporting dual anchor-offset representation) and `HeuristicBoundaryGuard`.
 - [ ] Step 3: Run `pytest tests/e2e/test_e2e_bleed_repair.py`.
 - [ ] Step 4: Assert artifact written to `test-artifacts/bleed_repair_diff.json`.
 - [ ] Step 5: Commit.
 
-#### Task 3.2: Accretive Ground Truth Store (Persistent Flywheel)
-- **Failure Mode / Scenario**: Manual boundary adjustments are lost when the session ends, forcing the agent to repeat work on future runs.
-- **Files**: `src/masar/verification/accretive_store.py`
-- [ ] Step 1: Write failing test: adjust split for `hadith_id: bukhari-1`; save to accretive store; perform fresh query; assert that retrieved candidate automatically applies curated boundary.
-- [ ] Step 2: Implement SQLite-backed `AccretiveStore` (`masar-curated.db`).
+#### Task 3.2: Accretive Ground Truth Store via Read-Through Overlay (D011)
+- **Failure Mode / Scenario**: Manual boundary adjustments are lost when the session ends, forcing the agent to repeat work on future runs; or attempting to mutate the immutable raw corpus archive directly.
+- **Files**: `src/masar/verification/accretive_store.py`, `tests/unit/test_accretive_store.py`
+- [ ] Step 1: Write failing test: adjust split for `hadith_id: bukhari-1`; save delta override to accretive overlay store; perform fresh query through `CorpusAdapter`; assert that retrieved candidate automatically applies curated overlay boundary without mutating base storage.
+- [ ] Step 2: Implement SQLite-backed `AccretiveStore` (`masar-curated.db`) with read-through overlay resolver.
 - [ ] Step 3: Verify test passes.
 - [ ] Step 4: Commit.
 

@@ -93,3 +93,40 @@ This document is the permanent architectural ledger for Masar (مسار). It rec
   2. Implement a `RiwayatCorpusAdapter` for the pre-indexed 925K dataset, a `CustomFileCorpusAdapter` for user-supplied JSON/CSV/SQLite/text files, and an `InMemoryScratchpadAdapter` for ad-hoc manual entries.
   3. Treat **Manual Entry** as a first-class citizen: an agent or user can paste raw text via CLI (`masar add`) or UI, trigger an automated boundary heuristic split, edit/confirm it, attach citation provenance, and seamlessly bundle it alongside corpus-retrieved variants.
 - **Consequences**: Masar operates seamlessly with or without `riwayat-corpus`. Any raw text can be ingested, aligned, verified, and exported to Riwaq.
+
+
+---
+
+### D011: Read-Through Overlay Architecture for Accretive Storage
+- **Status**: Accepted
+- **Context**: Raw scraped corpora (`riwayat-corpus`, Shamela dumps) must remain immutable, read-only baselines. However, when an agent or scholar repairs a boundary split or disambiguates a narrator, that correction must permanently shadow the unverified baseline across all future searches without rewriting raw corpus files.
+- **Decision**: Implement a **Read-Through Overlay Architecture**:
+  1. `L0 Base Layer`: Read-only `CorpusAdapter` querying original database/files.
+  2. `L3 Overlay Layer`: `AccretiveStore` (`masar-curated.db`) storing delta records keyed by `(corpus_id, record_id)` containing verified `matn_start`, `matn_end`, narrator chain corrections, verification timestamp, and editor provenance.
+  3. All read requests transparently resolve `Overlay.get() or Base.get()`.
+- **Consequences**: Zero mutation of immutable corpus assets; 100% persistent accretion of verified scholarly ground truth.
+
+---
+
+### D012: Dual Anchor-Offset Boundary Split Contract
+- **Status**: Accepted
+- **Context**: In Arabic text, character offsets (`[start:end]`) are notoriously fragile: a single diacritic, zero-width joiner, or orthographic normalization shifts offsets by $\pm 1$ or $\pm 2$ characters, leading to boundary drift.
+- **Decision**: Represent every boundary split with dual contracts:
+  1. *Character Offsets*: Absolute `(matn_start, matn_end)` in the raw string.
+  2. *Token Anchors*: Pivot token context `(pre_matn_token, post_isnad_token)` with surrounding window verification.
+  If character offsets drift due to normalization or formatting, the engine uses token anchors to re-align the split deterministically.
+- **Consequences**: Immune to diacritic/whitespace boundary drift; highly legible and robust for LLM agents.
+
+---
+
+### D013: Unified Multi-Modal Takhrīj Query Contract
+- **Status**: Accepted
+- **Context**: In real-world scholarly research, queries are rarely limited to single text snippets. Scholars and agents frequently query by Companion authority, transmitter Common Link hub, or ask to enrich an existing bundle with cross-sectarian parallels.
+- **Decision**: Define `TakhrijQuery` as a multi-modal request:
+  - `text`: optional search string (lexical & semantic)
+  - `authority`: optional Companion or transmitter name/ID
+  - `hub`: optional 2nd-century Common Link anchor
+  - `collection_scope`: `all` | `sunni` | `shia` | explicit list
+  - `enrich_family_id`: optional target family to enrich
+  - `min_confidence`: float threshold (default 0.60)
+- **Consequences**: A single unified search interface serves keyword search, transmitter search, topical search, and bundle enrichment.

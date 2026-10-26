@@ -52,8 +52,14 @@ When an autonomous AI agent operates a research and engineering toolchain, conve
 
 ## 2. The Five Pillars of Agent-Centric Design
 
-### Pillar 1: The "Agent Lens" (Token-Thrifty Observability)
-An agent needs to understand the exact state of a tradition search in seconds without consuming 20,000 tokens of raw Arabic text.
+### Pillar 1: The "Agent Lens" & Unified Multi-Modal Querying
+An agent needs to query flexibly and understand the exact state of a tradition search in seconds without consuming 20,000 tokens of raw Arabic text.
+- **Unified Multi-Modal `TakhrijQuery` (D013)**:
+  An agent can initiate takhrīj using any combination of signals:
+  - Text search: Lexical or semantic search string (`text`).
+  - Authority search: Companion or early transmitter (`authority`: e.g. "أبو هريرة").
+  - Hub anchoring: 2nd-century Common Link (`hub`: e.g. "ابن شهاب الزهري").
+  - Cross-sectarian bundle enrichment: Target an existing family (`enrich_family_id`) to find missing parallels across sectarian boundaries.
 - **Hierarchical Summaries**: Every discovery query returns a high-density, tiered response:
   - *Tier 1 (Terse / Triage)*: 200 tokens total. A table of candidate matches containing `hadith_id`, `collection`, `sectarian_tag`, `composite_score`, `overlap_ratio`, and a 6-word pericope snippet.
   - *Tier 2 (Variant Focus)*: Full inspection available on a *single* target candidate (`hadith_id`), providing exact character offsets, parsed isnad chains, and matn text.
@@ -89,17 +95,19 @@ The system never returns an opaque ranking number (e.g., `score: 0.84`). Instead
 ```
 This enables the agent to immediately diagnose *why* a report was surfaced and detect false positives (e.g., high semantic score but completely different isnad and companion).
 
-### Pillar 3: Append-Only Journal & Reversible Execution
+### Pillar 3: Append-Only Journal & Dual Anchor-Offset Splits
 Agents make mistakes, refine hypotheses, and explore alternate variant clusterings. Masar implements an **Event-Sourced Session Journal**:
 - Every action (`ADD_VARIANT`, `EXCLUDE_VARIANT`, `ADJUST_SPLIT`, `TAG_NARRATOR`) appends an immutable event to the session log.
 - Full time-travel and rollback: `masar session undo` or `masar session rollback --step 3`.
-- The session state can be serialized, shared between subagents, or handed off between execution turns without losing context.
+- **Dual Anchor-Offset Boundary Contract (D012)**:
+  To prevent boundary drift caused by Arabic diacritics, tatweel, or normalization shifts, every boundary is stored with both character offsets `(start, end)` AND robust pivot token anchors `(pre_matn_token, post_isnad_token)`.
 
-### Pillar 4: Accretive Ground Truth (The Flywheel)
+### Pillar 4: Accretive Ground Truth & Read-Through Overlay (The Flywheel)
 In `riwayat-corpus`, over 214,000 texts suffer from Tier-C CRF parsing noise (matn boundary bleed, narrator names leaking into text).
-- When an agent or human adjusts a split in Masar, that correction is saved to `masar-curated.db` (The Accretive Store).
-- Future searches across the corpus automatically apply the curated boundary overrides.
-- Over time, running Masar progressively cleans and elevates the raw corpus into a gold-standard academic dataset.
+- **Read-Through Overlay Architecture (D011)**:
+  The raw corpus ($L_0$) remains immutable. Verified boundary adjustments and narrator corrections are stored in an overlay database (`masar-curated.db`).
+- All corpus read queries pass through this overlay: if a curated override exists for `(corpus_id, record_id)`, it seamlessly shadows the unverified baseline.
+- Over time, running Masar progressively cleans and elevates the raw corpus into a gold-standard academic dataset without modifying the underlying raw corpus files.
 
 ### Pillar 5: Deterministic Preflight Gates
 Before any bundle is emitted to Riwaq, it must pass through an automated **Preflight Gate**:

@@ -2,7 +2,7 @@
 
 **High-Precision, Agent-Ergonomic Hadith Takhrīj & Variant Bundling Engine**
 
-Masar bridges unbundled hadith corpora (such as `riwayat-corpus` with ~925,000 records, custom JSON/CSV collections, and raw manuscript transcriptions) into verified, gate-checked `family_id` bundles. While Masar functions as a fully autonomous, standalone takhrīj workbench and variant discovery engine, it also serves as the native upstream feeder for [**Riwaq**](https://github.com/munir-abbasi/riwaq) (the Isnad-cum-Matn Analysis and stemma engine), guaranteeing 100% schema compliance (`schema_version: 1`) and protecting downstream ICMA analysis against boundary bleed, homonym traps, and topical false positives.
+Masar bridges unbundled hadith corpora (such as [**riwayat-corpus**](https://github.com/abdullahansara/riwayat-corpus) with ~925,000 records, custom JSON/CSV collections, and raw manuscript transcriptions) into verified, gate-checked `family_id` bundles. While Masar functions as a fully autonomous, standalone takhrīj workbench and variant discovery engine, it also serves as the native upstream feeder for [**Riwaq**](https://github.com/munir-abbasi/riwaq) (the Isnad-cum-Matn Analysis and stemma engine), guaranteeing 100% schema compliance (`schema_version: 1`) and protecting downstream ICMA analysis against boundary bleed, homonym traps, and topical false positives.
 
 ---
 
@@ -11,9 +11,9 @@ Masar bridges unbundled hadith corpora (such as `riwayat-corpus` with ~925,000 r
 - **Orthogonal 4-Signal Takhrīj Discovery**: Decomposes candidate matching confidence into 4 independent signals—Lexical BM25, Sliding-Window Pericope Jaccard (*Taqṭīʿ*), Dense Semantic Cosine (*Riwāyah bi-l-Maʿnā*), and Isnad Authority Overlap.
 - **Explainability Receipts**: Every candidate hadith emitted during discovery carries an immutable `ExplainabilityReceipt` documenting raw and normalized signal scores and alignment spans.
 - **Topical False Positive Quarantine (Topic Trap Guard)**: Candidates with high semantic similarity discussing the same topic without pericope overlap or isnad convergence are quarantined automatically as `TOPICAL_FALSE_POSITIVE`.
-- **Accretive Read-Through Overlay (`masar-curated.db`)**: Ground-truth boundary split repairs and narrator corrections persist in an accretive SQLite store. Base scraped corpora remain 100% immutable while queries automatically inherit verified boundaries.
+- **Accretive Read-Through Overlay (`masar-curated.db`)**: Ground-truth boundary split repairs and narrator corrections persist in an accretive SQLite store. Base scraped corpora (such as [**riwayat-corpus**](https://github.com/abdullahansara/riwayat-corpus)) remain 100% immutable while queries automatically inherit verified boundaries.
 - **Reversible Agent Workspace Journal**: Every action (`ADD`, `PRUNE`, `SPLIT`, `STAGE`) is recorded in an append-only, event-sourced journal supporting single-step rollback (`masar session undo`).
-- **Corpus Agnosticism & First-Class Manual Entry**: Ingest raw manuscript snippets or printed texts using heuristic isnad/matn split detection, or ingest external datasets via `CustomFileCorpusAdapter`.
+- **Corpus Agnosticism & First-Class Manual Entry**: Ingest raw manuscript snippets or printed texts using heuristic isnad/matn split detection, ingest external datasets via `CustomFileCorpusAdapter`, or query standard SQLite archives like [**riwayat-corpus**](https://github.com/abdullahansara/riwayat-corpus).
 - **AI Proposal Staging Buffer & Drift Guard**: Agent-generated boundary splits and variant groupings pass through a typed staging buffer (`ProposalStore`) with SHA-256 operation receipts before committing to curated ground truth.
 - **Four Deterministic Preflight Gates**: Pre-export validation enforcing `GateSchema`, `GateFamilyConsistency`, `GateBoundaryHygiene`, and `GateIsnadIntegrity` before generating Riwaq `import-batch.json` bundles.
 - **Multi-Modal Agent Interfaces**: Token-thrifty machine CLI (`masar --compact` < 300 tokens), native Model Context Protocol (MCP) JSON-RPC stdio server (`masar mcp`), headless REST API, and Vite + React interactive workbench.
@@ -202,6 +202,8 @@ Apply Curated Boundary Slice          Read Raw Base Corpus
                           ▼
             Resolved Candidate Record
 ```
+
+*The underlying base corpus (e.g. [**riwayat-corpus**](https://github.com/abdullahansara/riwayat-corpus)) remains strictly read-only; all human and agent boundary repairs shadow it accretively via `masar-curated.db`.*
 
 ---
 

@@ -128,8 +128,8 @@ def test_riwaq_import_batch_json_schema(riwaq_batch_schema):
         hadith_record_schema = json.load(f)
 
     store = {
-        "https://isnad-builder.app/schemas/import-batch.json": riwaq_batch_schema,
-        "https://isnad-builder.app/schemas/hadith-record.json": hadith_record_schema,
+        "https://raw.githubusercontent.com/munir-abbasi/riwaq/main/schemas/import-batch.json": riwaq_batch_schema,
+        "https://raw.githubusercontent.com/munir-abbasi/riwaq/main/schemas/hadith-record.json": hadith_record_schema,
         "hadith-record.json": hadith_record_schema,
     }
     schema_path = (SCHEMAS_DIR / "riwaq-import-batch.json").as_uri()

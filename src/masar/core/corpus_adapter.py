@@ -54,11 +54,12 @@ class CustomFileCorpusAdapter:
 
     @classmethod
     def _from_json(cls, path: Path) -> "CustomFileCorpusAdapter":
-        """Parse JSON list of hadith records."""
+        """Parse JSON list of hadith records or Riwaq ImportBatch payload."""
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
 
-        records = [cls._dict_to_record(item) for item in data]
+        items = data.get("records", []) if isinstance(data, dict) else data
+        records = [cls._dict_to_record(item) for item in items]
         return cls(records)
 
     @classmethod
@@ -74,22 +75,48 @@ class CustomFileCorpusAdapter:
     @staticmethod
     def _dict_to_record(d: dict[str, Any]) -> CandidateRecord:
         """Convert a dictionary to a CandidateRecord."""
-        narrators = d.get("primary_narrators") or []
+        rec_id = str(d.get("hadith_id") or d.get("id"))
+        source_ref = d.get("source_ref")
+        coll = str(
+            d.get("collection")
+            or (source_ref.get("collection") if isinstance(source_ref, dict) else None)
+            or "custom"
+        )
+        variants = d.get("variants") or []
+        first_variant = variants[0] if isinstance(variants, list) and variants and isinstance(variants[0], dict) else {}
+        isnad_raw = d.get("isnad_raw") or first_variant.get("isnad_raw")
+        matn_text = str(
+            d.get("matn")
+            or d.get("matn_raw")
+            or first_variant.get("matn_raw")
+            or first_variant.get("matn")
+            or ""
+        )
+
+        narrators = d.get("primary_narrators")
+        if not narrators and first_variant:
+            narrators = first_variant.get("isnad_chain")
+        if not narrators:
+            narrators = []
         if isinstance(narrators, str):
             try:
                 narrators = json.loads(narrators)
             except Exception:
                 narrators = [n.strip() for n in narrators.split(",") if n.strip()]
 
+        full_text = d.get("full_text")
+        if not full_text and isnad_raw and matn_text:
+            full_text = f"{isnad_raw} {matn_text}"
+
         return CandidateRecord(
-            id=str(d.get("id")),
-            collection=str(d.get("collection", "custom")),
+            id=rec_id,
+            collection=coll,
             book_number=d.get("book_number"),
             hadith_number=str(d.get("hadith_number", "1")),
             sect=d.get("sect", "sunni"),
-            full_text=d.get("full_text"),
-            matn=str(d.get("matn", "")),
-            isnad_raw=d.get("isnad_raw"),
+            full_text=full_text,
+            matn=matn_text,
+            isnad_raw=isnad_raw,
             narrator_ids=narrators,
         )
 

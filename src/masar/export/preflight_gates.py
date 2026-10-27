@@ -37,6 +37,7 @@ class PreflightValidator:
         batch_dict = batch.model_dump(mode="json")
         batch_schema_path = self.schemas_dir / "riwaq-import-batch.json"
         hadith_schema_path = self.schemas_dir / "riwaq-hadith-record.json"
+        narrator_schema_path = self.schemas_dir / "narrator-profile.json"
 
         if not batch_schema_path.exists():
             return "PASS"  # Skip JSON schema if schema directory not present
@@ -46,10 +47,17 @@ class PreflightValidator:
         with open(hadith_schema_path, encoding="utf-8") as f:
             hadith_schema = json.load(f)
 
+        narrator_schema = {}
+        if narrator_schema_path.exists():
+            with open(narrator_schema_path, encoding="utf-8") as f:
+                narrator_schema = json.load(f)
+
         store = {
-            "https://isnad-builder.app/schemas/import-batch.json": batch_schema,
-            "https://isnad-builder.app/schemas/hadith-record.json": hadith_schema,
+            "https://raw.githubusercontent.com/munir-abbasi/riwaq/main/schemas/import-batch.json": batch_schema,
+            "https://raw.githubusercontent.com/munir-abbasi/riwaq/main/schemas/hadith-record.json": hadith_schema,
             "hadith-record.json": hadith_schema,
+            "https://raw.githubusercontent.com/munir-abbasi/riwaq/main/schemas/narrator-profile.json": narrator_schema,
+            "narrator-profile.json": narrator_schema,
         }
         resolver = jsonschema.RefResolver(
             base_uri=batch_schema_path.as_uri(),

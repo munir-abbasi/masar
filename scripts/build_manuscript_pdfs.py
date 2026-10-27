@@ -164,7 +164,7 @@ def build_english_pdf():
     html_body = wrap_arabic_in_english_html(html_body)
 
     # Enhance Metadata header into elegant academic card
-    meta_pattern = r'<p><strong>Article type:</strong>\s*(.*?)</p>'
+    meta_pattern = r'<p>(<strong>(?:Author|Article type):</strong>.*?)</p>'
     def meta_repl(m):
         raw = m.group(1)
         lines = [line.strip() for line in raw.split('<br />') if line.strip()]
@@ -584,15 +584,15 @@ def build_urdu_pdf():
     html_body = wrap_arabic_in_urdu_html(html_body)
 
     # Enhance Metadata header into elegant academic card
-    meta_pattern = r'<p><strong>مضمون کی نوعیت:</strong>\s*(.*?)</p>'
+    meta_pattern = r'<p>(<strong>(?:مصنف|مضمون کی نوعیت):</strong>.*?)</p>'
     def meta_repl(m):
         raw = m.group(1)
         lines = [line.strip() for line in raw.split('<br />') if line.strip()]
         if not lines:
             lines = [line.strip() for line in raw.split('\n') if line.strip()]
         meta_html = '<div class="article-meta-box-urdu">\n'
-        meta_html += '  <div class="meta-line"><strong>مضمون کی نوعیت:</strong> تاریخی اور متنی تحقیقی مقالہ &nbsp; | &nbsp; <strong>تاریخِ مطالعہ:</strong> ۲۶ اکتوبر ۲۰۲۶ء (تجدید: ۲۷ اکتوبر ۲۰۲۶ء)</div>\n'
-        meta_html += '  <div class="meta-line"><strong>کلیدی الفاظ:</strong> جسّاسہ، تمیم داری، فاطمہ بنت قیس، دجال، شعبی، اسناد و متون کا تقابلی تجزیہ، مشترک راوی، مسار، رِواق</div>\n'
+        for line in lines:
+            meta_html += f'  <div class="meta-line">{line}</div>\n'
         meta_html += '</div>\n'
         return meta_html
     html_body = re.sub(meta_pattern, meta_repl, html_body, flags=re.DOTALL)

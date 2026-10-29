@@ -128,6 +128,9 @@ Masar provides a native stdio MCP server for agent harnesses (Antigravity, Claud
 masar mcp --db corpus.db
 ```
 
+> [!TIP]
+> For higher-level agent workflow orchestration and structured scholarly research protocols connecting Masar and Riwaq, see the [**masar-riwaq-skills**](https://github.com/munir-abbasi/masar-riwaq-skills) repository.
+
 #### Available MCP Tools
 
 | Tool Name | Parameters | Description |
@@ -319,6 +322,16 @@ When paired with [**Riwaq**](https://github.com/munir-abbasi/riwaq) (Isnad-cum-M
 1. **Discovery & Verification (Masar — Standalone)**: Discovers, verifies, and bundles candidate variants across Sunni and Shīʿī collections into a unified family bundle.
 2. **Preflight Gating (Masar — Standalone)**: Validates boundary hygiene, family consistency, and schema compliance.
 3. **ICMA Analysis (Riwaq — Downstream Consumer)**: Ingests the exported `import-batch.json`, maps transmitter networks into a Directed Acyclic Graph (DAG), computes Common Links (CL) and Partial Common Links (PCL), and generates formal academic ICMA reports.
+
+---
+
+## Agent Skills Ecosystem ([masar-riwaq-skills](https://github.com/munir-abbasi/masar-riwaq-skills))
+
+For autonomous agent harnesses (Antigravity, Claude Code, Cursor, OpenCode, Hermes) conducting end-to-end hadith research across both engines, the [**masar-riwaq-skills**](https://github.com/munir-abbasi/masar-riwaq-skills) repository provides a standardized Agent Skills specification encoding disciplined scholarly methodology:
+
+- **`masar-takhrij`**: Application skill governing multi-signal variant discovery, CRF boundary bleed correction, false-positive quarantine, and verified bundle export (`schema_version: 1`).
+- **`riwaq-analysis`**: Application skill governing 10-layer ICMA stemma analysis, transmission DAG derivation, and Common Link (CL/PCL) detection.
+- **`hadith-isnad-cum-matn-research`**: Mother skill orchestrator guiding an 8-phase research workflow with 4 human-in-the-loop approval gates (scope definition, corpus curation, identity resolution, publication release) and non-negotiable evidentiary standards (zero textual fabrication, candidates ≠ attestations, dual Arabic text representation, and complete provenance tracking).
 
 ---
 
